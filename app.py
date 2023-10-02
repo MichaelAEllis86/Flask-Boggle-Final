@@ -1,116 +1,78 @@
-#how to import flask things
-from flask import Flask, request, render_template, redirect, flash, session, make_response
+from boggle import Boggle
+from flask import Flask, request, render_template, redirect, flash, jsonify, session
 from flask_debugtoolbar import DebugToolbarExtension
-from random import randint, choice 
-from surveys import Question, Survey
 app=Flask(__name__)
 app.config["SECRET_KEY"]="mookster21"
 debug=DebugToolbarExtension(app)
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
-satisfaction_survey = Survey(
-    "Customer Satisfaction Survey",
-    "Please fill out a survey about your experience with us.",
-    [
-        Question("Have you shopped here before?"),
-        Question("Did someone else shop with you today?"),
-        Question("On average, how much do you spend a month on frisbees?",
-                 ["Less than $10,000", "$10,000 or more"]),
-        Question("Are you likely to shop here again?"),
-    ])
+# operation of the game board
+boggle_game = Boggle()
 
-@app.route("/")
+# board=boggle_game.make_board()
+
+@app.route('/')
 def show_root():
-    # responses=[] may return to this line, intention was to reset responses list upon returning to root page. Change to list is not lasting once questions are reaccessed after survey completion maybe cookies or something interferring i dunno
-    questions=satisfaction_survey.questions
-    instructions=satisfaction_survey.instructions
-    title=satisfaction_survey.title
-    # print("printing responses", responses, type(responses), len(responses))
-    return render_template ("root.html",questions=questions,instructions=instructions,title=title,)
+    """ Renders the root/base.html page """
+    return render_template('base.html')
 
-@app.route("/begin", methods=["POST"])
-def begin_or_reset_survey():
-    session ["responses"]=[]
-    print("responses have been reset", session, session["responses"])
-    return redirect("/questions/0")
+@app.route('/home')
+def show_home():
 
-@app.route("/questions/<int:id>", methods=["POST", "GET"])
-def find_question(id):
-    current_question=satisfaction_survey.questions[id].question
-    choices=satisfaction_survey.questions[id].choices
-    choice1=satisfaction_survey.questions[id].choices[0]
-    choice2=satisfaction_survey.questions[id].choices[1]
-    for choice in choices:
-        print(choice)
-    print("printing responses", session, session["responses"], type(session["responses"]), len(session["responses"]))
-
-    if (len(session["responses"])==0 and id != 0):
-        # in this scenario the user tries to access a question before starting. Take back to root/start
-        return redirect("/")
+    """Renders the boggle game page and html necessary to play a game such as the guessform,
+       makes a new board via boggle class's make_board(), saves it to session, and renders board in html"""
     
-    if (len(session["responses"]) == len(satisfaction_survey.questions)):
-        # They've answered all the questions! Thank them but dont let them answer more questions/restart 
-        return redirect("/complete")
+    board=boggle_game.make_board()
+    session ["current_board"]=board
+    return render_template('home.html',board=board)
+
+@app.route("/check")
+def check_word():
     
-    if (len(session["responses"]) != id):
-        # Trying to access questions out of order.
-        flash(f"Invalid question id: {id}." ,"error")
-        return redirect(f"/questions/{len(session['responses'])}")
+    """Check if word is in dictionary. Each boggle guess word is taken from request obj via game's guess form in the html, 
+    and is sent through this route for validation via boggle class's check_valid_word()
+    response from check_valid_word is sent to front end via json"""
+
+    word = request.args.get("word")
+    print("printing the request object", request.args)
+    print("printing word from request.args",word)
+    board = session["current_board"]
+    print('printing board from the session',board)
+    response = boggle_game.check_valid_word(board, word)
+    print("printing the response in python",response)
+    # return redirect("/home")
+
+    # this logic was for flash messaging the user if the word would be a success. Doesn't work because page isn't refreshed when axios makes request in js file
+    # howeever it does work if we were to refresh the page each time
     
-    return render_template("questions.html",current_question=current_question,id=id,choices=choices,choice1=choice1,choice2=choice2)
+    # if response =="ok":
+    #     flash(f'{word} is valid','success')
+    # elif response =="not-word":
+    #     flash(f'{word} is not a valid english word','error')
+    # elif response == "not-on-board":
+    #     flash (f'{word} is not on the board','error')
 
-@app.route("/answers", methods=["POST", "GET"])
-def add_survey_answer():
-    answer=request.form["answer"]
-    responses=session["responses"]
-    responses.append(answer)
-    session["responses"]=responses
-    print("printing most recent answer...", answer)
-    print("printing session data...",session,session["responses"])
+    return jsonify({'result': response}) 
 
-    if (len(session["responses"]) == len(satisfaction_survey.questions)):
-        # Then they have answered all questions redirect to finished survery page
-        return redirect ("/complete")
-    
-    else: return redirect (f"/questions/{len(session['responses'])}")
+@app.route("/playerdata",methods=["POST"])
+def receive_playerdata():
+    """ Receives player data (player's most recent game score) from app.js sendplayerData() 
+     if it's a new highscore respond with new highscore data in json to front end! Saves highscore and number of games played in the session """
+    data=request.json
+    print("printing request.json AKA data variable...",data)
+    score = int(request.json["score"])
+    print(score,type(score))
+    highscore = session.get("highscore", 0)
+    games_played=session.get("games-played",0)+1
+    session['games-played']=games_played
+    session['highscore'] = max(score, highscore)
+    print(session['games-played'],"......", session['highscore'])
+    return jsonify(brokeRecord=score > highscore, score=score, highscore=session['highscore'],games_played=session['games-played'])
 
-
-@app.route("/base")
-def show_base_template():
-    return render_template("base.html")
-
-@app.route("/complete")
-def show_complete():
-    return render_template ("complete.html")
-
-#  
-    # print(satisfaction_survey.questions)
-    # print(satisfaction_survey.instructions)
-    # print(satisfaction_survey.title)
-    # print("SPACE")
-    # print(questions)
-    # print(instructions)
-    # print(title)
-    # print("SPACE")
-
-# class Survey:
-#     """Questionnaire."""
-
-#     def __init__(self, title, instructions, questions):
-#         """Create questionnaire."""
-
-#         self.title = title
-#         self.instructions = instructions
-#         self.questions = questions
-
-
-# satisfaction_survey = Survey(
-#     "Customer Satisfaction Survey",
-#     "Please fill out a survey about your experience with us.",
-#     [
-#         Question("Have you shopped here before?"),
-#         Question("Did someone else shop with you today?"),
-#         Question("On average, how much do you spend a month on frisbees?",
-#                  ["Less than $10,000", "$10,000 or more"]),
-#         Question("Are you likely to shop here again?"),
-#     ])
+@app.route("/highscores")
+def show_highscores():
+    """ Shows highscore page with highscore and games_played player data (grabbed via the session)"""
+    session['highscore'] = session.get("highscore", 0)
+    session['games-played'] = session.get("games-played",0)
+    print("printing highscore...", session['highscore'])
+    print("printing games_played...",session['games-played'])
+    return render_template("highscores.html")
