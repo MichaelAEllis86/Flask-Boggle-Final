@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/app.css">
+    <title> {% block title %}{% endblock %}</title>
+</head>
+<body> 
+    <nav class="navbar">
+    <a href="/">Root</a>
+    <a href="/home">New Game/Play Again</a>
+    <a href="/highscores">Highscore & Games Played</a>
+    </nav>
+    <h1 id="basewelcome">Welcome to Boggle</h1>
+    </section>
+    <main id="content"> {%block content%}{% endblock %} </main>
+    {% with messages= get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="messages">
+    {% for category,msg in messages %}
+    <p class="{{category}}">{{category}} {{msg}}</p>
+    {% endfor %}
+    </section>
+    {%endif%}
+    {%endwith%}
+
+<script src="/static/app.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/axios/dist/axios.js"></script>
+</body>
+</html>
