@@ -25,12 +25,6 @@ def show_home():
     session ["current_board"]=board
     return render_template('home.html',board=board)
 
-# @app.route('/check', methods=['POST','GET'])
-# def show_check_guess():
-#     print(request.args)
-#     return redirect('/home')
-
-
 @app.route("/check")
 def check_word():
     
@@ -64,15 +58,15 @@ def receive_playerdata():
     """ Receives player data (player's most recent game score) from app.js sendplayerData() 
      if it's a new highscore respond with new highscore data in json to front end! Saves highscore and number of games played in the session """
     data=request.json
-    print(data)
+    print("printing request.json AKA data variable...",data)
     score = int(request.json["score"])
     print(score,type(score))
     highscore = session.get("highscore", 0)
-    games_played=session.get("games-played",0)
-    session['games-played']=games_played + 1
+    games_played=session.get("games-played",0)+1
+    session['games-played']=games_played
     session['highscore'] = max(score, highscore)
     print(session['games-played'],"......", session['highscore'])
-    return jsonify(brokeRecord=score > highscore, highscore=highscore,games_played=games_played)
+    return jsonify(brokeRecord=score > highscore, score=score, highscore=session['highscore'],games_played=session['games-played'])
 
 @app.route("/highscores")
 def show_highscores():
