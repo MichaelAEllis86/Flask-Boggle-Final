@@ -118,7 +118,9 @@ $startButton.on("click", function(evt){
 async function checkGuess(word){
     //getting the response from the server
     const response= await axios.get("/check", {params: {"word":word}})
+    console.log(response)
     const result=response.data.result
+    console.log(result)
     const pointValue=word.length
     if(result==="ok" && guessedWords.indexOf(word)===-1){
         score+=pointValue
@@ -146,10 +148,20 @@ async function checkGuess(word){
 
 }
 
+//sends player data to /playerdata route after a user completes a game
 async function sendPlayerData(){
     const response=await axios.post('/playerdata',{score:`${score}`})
+
+    //another way of formatting a successful post request from axios
+    // const response=await axios({
+    //     method:"POST",
+    //     url:"/playerdata",
+    //     data:{"score":`${score}`}
+    // })
+
     console.log(response)
     highscore=response.data.highscore
+    console.log(response.data)
     gamesPlayed=response.data.games_played
     // displayHighScore(highscore)
     // displayNumPlays(gamesPlayed)
@@ -158,24 +170,9 @@ async function sendPlayerData(){
     }
 }
 
-    // console.log(result)
-
 //form data to reference
 
 // {/* <form id="guessform" action="/check" method=" GET, POST">
 // <input type="text" id="guessforminput" placeholder="type a guess here" name="guess">
 // <button>Submit guess!</button>
 // </form> */}
-
-
-// async function appendGiphySearch(search){
-//     const apiKey='api_key=AWBZs1dP8ZgYEkvyf7Oku6ehe6aKit83'
-//     const response= await axios.get (`https://api.giphy.com/v1/gifs/search?api_key=AWBZs1dP8ZgYEkvyf7Oku6ehe6aKit83&q=${search}&limit=1&offset=0&rating=g&lang=en`)
-//     console.log(response)
-//     const gifURL=response.data.data[0].images.original.url //what a horrendously long address to find!7 layers nested
-//     console.log(gifURL)
-//     let newGIF=document.createElement('img')
-//     newGIF.src=gifURL
-//     let imageDiv=document.getElementById('imagediv')
-//     imageDiv.append(newGIF)
-//     }
