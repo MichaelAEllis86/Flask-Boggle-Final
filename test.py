@@ -60,7 +60,7 @@ class FlaskTests(TestCase):
             self.assertEqual(session['games-played'],0)
 
     def test_check_valid(self):
-        """test if """
+        """testing /check route. Tests if correct response is sent to front-end for a valid guess word """
         with app.test_client() as client:
              with client.session_transaction() as change_session:
                 change_session['current_board']=[["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"]]
@@ -69,6 +69,7 @@ class FlaskTests(TestCase):
         self.assertEqual(response.json["result"],"ok")
 
     def test_check_invalid_not_on_board(self):
+        """testing /check route. Tests if correct response is sent to front-end for a guess word that is not-on-board """
         with app.test_client() as client:
              with client.session_transaction() as change_session:
                 change_session['current_board']=[["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"]]
@@ -77,6 +78,7 @@ class FlaskTests(TestCase):
         self.assertEqual(response.json["result"],"not-on-board")
     
     def test_check_invalid_not_a_word(self):
+        """testing /check route. Tests if correct response is sent to front-end for a guess word that is not a word """
         with app.test_client() as client:
              with client.session_transaction() as change_session:
                 change_session['current_board']=[["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"],["C","A","T","A","C"]]
@@ -86,6 +88,7 @@ class FlaskTests(TestCase):
 
 
     def test_playerdata(self):
+        """Testing /playerdata post route, checks if data is received, and if so do the session and response reflect updated highscore and games-played values"""
         with app.test_client() as client:
             with client.session_transaction() as change_session:
                 change_session["highscore"]=30
@@ -114,10 +117,3 @@ class FlaskTests(TestCase):
             self.assertEqual(response.json["highscore"],50)
             self.assertEqual(response.json['games_played'],1)
             
-            
-            
-    #     const response=await axios({
-    #     method:"POST",
-    #     url:"/playerdata",
-    #     data:{score:`${score}`}
-    # })
